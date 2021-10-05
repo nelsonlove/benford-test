@@ -130,3 +130,5 @@ dmypy.json
 
 #
 /etc/
+/tests/test.db
+/tests/scratch.py
