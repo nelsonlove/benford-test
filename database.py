@@ -59,4 +59,4 @@ class CSVFile(db.Model):
         return [row[i] for row in self.dump()]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.column(0))
