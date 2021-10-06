@@ -9,18 +9,18 @@ from tests import setup_once
 app = setup_once()
 
 
-class TestCSVFile(TestCase):
+class BackendTestCase(TestCase):
     def setUp(self):
+        db.CSVFile.query.delete()
         self.assertEqual([], db.CSVFile.query.all())
 
         # I load a csv in
         self.filename = os.path.basename('test_csv_1.csv')
-        with open(f'{os.curdir}/{self.filename}', 'rb') as data:
+        with open(f'{os.path.dirname(__file__)}/{self.filename}', 'rb') as data:
             db.CSVFile.load(data, self.filename)
 
-    def tearDown(self):
-        db.CSVFile.query.delete()
 
+class TestCSVFile(BackendTestCase):
     def test_load(self):
         csvfile = db.CSVFile.query.one()
 
@@ -55,8 +55,9 @@ class TestCSVFile(TestCase):
         self.assertEqual(['seq', 'age', 'zip', 'dollar'], [col[1] for col in viable_cols])
 
 
-class TestFlask(TestCase):
+class TestFlask(BackendTestCase):
     def setUp(self):
+        super().setUp()
         self.client = app.test_client()
 
     def tearDown(self):
@@ -107,9 +108,7 @@ class TestFlask(TestCase):
 
     def test_analyze(self):
         # I want to analyze a csv someone previously added to the database
-        self.filename = os.path.basename('test_csv_1.csv')
-        with open(f'{os.curdir}/{self.filename}', 'rb') as data:
-            csvfile = db.CSVFile.load(data, self.filename)
+        csvfile = db.CSVFile.query.one()
 
         # Specifically I'm interested in the column with index of 3
         column_index = 3
