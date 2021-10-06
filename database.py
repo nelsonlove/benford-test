@@ -2,13 +2,12 @@ import codecs
 import csv
 import io
 import itertools
-
 import os
 
 import chardet
 from flask_sqlalchemy import SQLAlchemy
 
-import util
+from analysis import parse_numeric
 
 db = SQLAlchemy()
 
@@ -75,7 +74,7 @@ class CSVFile(db.Model):
     def viable_columns(self):
         def is_number(x):
             try:
-                util.parse_numeric(x)
+                parse_numeric(x)
             except ValueError:
                 return False
             return True

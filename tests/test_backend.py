@@ -1,8 +1,8 @@
 import json
 import os
-from io import BytesIO
 from unittest import TestCase
 
+import analysis
 import database as db
 from app import app
 
@@ -14,9 +14,8 @@ if os.path.exists(TEST_DB_PATH):
 db.init(app, TEST_DB_PATH)
 
 
-class FlaskTestCase(TestCase):
+class TestCSVFile(TestCase):
     def setUp(self):
-        self.client = app.test_client()
         self.assertEqual([], db.CSVFile.query.all())
 
         # I load a csv in
@@ -25,11 +24,8 @@ class FlaskTestCase(TestCase):
             db.CSVFile.load(data, self.filename)
 
     def tearDown(self):
-        del self.client
         db.CSVFile.query.delete()
 
-
-class TestCSVFile(FlaskTestCase):
     def test_load(self):
         csvfile = db.CSVFile.query.one()
 
@@ -47,6 +43,9 @@ class TestCSVFile(FlaskTestCase):
         # though there might be a header row as in this case
         self.assertEqual(101, len(csvfile.data()))
 
+        # We can also get specific columns
+        self.assertEqual(101, len(csvfile.column(0)))
+
     def test_viable_columns(self):
         csvfile = db.CSVFile.query.one()
 
@@ -61,7 +60,13 @@ class TestCSVFile(FlaskTestCase):
         self.assertEqual(['seq', 'age', 'zip', 'dollar'], [col[1] for col in viable_cols])
 
 
-class TestFlask(FlaskTestCase):
+class TestFlask(TestCase):
+    def setUp(self):
+        self.client = app.test_client()
+
+    def tearDown(self):
+        del self.client
+
     def test_index(self):
         # Flask is working!
         response = self.client.get('/')
@@ -74,10 +79,10 @@ class TestFlask(FlaskTestCase):
         response_json = json.loads(response.get_data())
 
         # The API confirms that I've uploaded a csv called test_csv_1.csv
-        self.assertEqual([self.filename], response_json['uploadedFiles'])
+        self.assertEqual(['test_csv_1.csv'], response_json['uploadedFiles'])
 
     def test_upload(self):
-        # I upload a second csv
+        # I upload a csv
         filename = 'test_csv_2.csv'
         with open(f'{os.curdir}/{filename}', 'rb') as data:
             response = self.client.post('/upload', data={
@@ -85,8 +90,8 @@ class TestFlask(FlaskTestCase):
             })
         self.assertEqual(response.status_code, 200)
 
-        response_json = json.loads(response.get_data())
         # The API returns the csv's filename
+        response_json = json.loads(response.get_data())
         self.assertEqual(filename, response_json['filename'])
 
         # As well as a preview of the csv
@@ -99,3 +104,39 @@ class TestFlask(FlaskTestCase):
 
         # Along with indices for viable columns
         self.assertEqual([0, 3, 4, 5, 6], response_json['viableColumnIndices'])
+
+    def test_analyze(self):
+        # I want to analyze a csv someone previously added to the database
+        self.filename = os.path.basename('test_csv_1.csv')
+        with open(f'{os.curdir}/{self.filename}', 'rb') as data:
+            csvfile = db.CSVFile.load(data, self.filename)
+
+        # Specifically I'm interested in the column with index of 3
+        column_index = 3
+        column = csvfile.column(column_index)
+
+        # The API returns the data for the analysis
+        response = self.client.get(f'/analyze?filename={csvfile.filename}&columnIndex={column_index}')
+        self.assertEqual(response.status_code, 200)
+        response_json = json.loads(response.get_data())
+
+        # This includes the sample size,
+        data = analysis.clean_data(column)
+        n = len(data)
+        self.assertEqual(n, response_json['n'])
+
+        # the expected distribution,
+        expected = analysis.expected_distribution(n)
+        self.assertEqual(expected, response_json['expectedDistribution'])
+
+        # the observed distribution,
+        observed = analysis.observed_distribution(data)
+        self.assertEqual(observed, response_json['observedDistribution'])
+
+        # the test statistic at various values of p,
+        sum_chi_squares = analysis.sum_chi_squares(expected, observed)
+        self.assertEqual(sum_chi_squares, response_json['testStatistic'])
+
+        # and the test result
+        goodness_of_fit = analysis.goodness_of_fit(expected, observed)
+        self.assertEqual(goodness_of_fit, response_json['goodnessOfFit']['results'])

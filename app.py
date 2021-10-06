@@ -2,6 +2,7 @@ import sqlalchemy.exc
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
+import analysis
 import database as db
 
 app = Flask(__name__)
@@ -46,6 +47,35 @@ def upload():
     except sqlalchemy.exc.IntegrityError:
         return 'There was an error uploading the file.', 422
     return preview(csvfile.filename)
+
+
+@app.route('/analyze', methods=['GET'])
+def analyze(filename=None):
+    filename = request.args.get('filename', filename)
+    column_index = int(request.args['columnIndex'])
+    if not filename:
+        return "No file was specified", 400
+
+    try:
+        csvfile = db.CSVFile.query.filter_by(filename=filename).one()
+    except sqlalchemy.exc.NoResultFound:
+        return "File not found", 404
+    else:
+        column = csvfile.column(column_index)
+        data = analysis.clean_data(column)
+        expected = analysis.expected_distribution(len(data))
+        observed = analysis.observed_distribution(data)
+        response = {
+            'n': len(data),
+            'expectedDistribution': expected,
+            'observedDistribution': observed,
+            'testStatistic': analysis.sum_chi_squares(expected, observed),
+            'goodnessOfFit': {
+                'criticalValues': analysis.CRITICAL_VALUES,
+                'results': analysis.goodness_of_fit(expected, observed)
+            }
+        }
+        return response, 200
 
 
 def main():
