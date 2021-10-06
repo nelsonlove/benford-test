@@ -80,7 +80,7 @@ class TestFlask(BackendTestCase):
     def test_upload(self):
         # I upload a csv
         filename = 'test_csv_2.csv'
-        with open(f'{os.curdir}/{filename}', 'rb') as data:
+        with open(f'{os.path.dirname(__file__)}/{filename}', 'rb') as data:
             response = self.client.post('/upload', data={
                 "csv": (data, filename)
             })
