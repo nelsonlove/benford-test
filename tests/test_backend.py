@@ -4,10 +4,9 @@ from unittest import TestCase
 
 import analysis
 import database as db
-from app import app
 from tests import setup_once
 
-setup_once(app)
+app = setup_once()
 
 
 class TestCSVFile(TestCase):

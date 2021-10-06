@@ -10,7 +10,7 @@ from database import db, CSVFile
 app = Flask(__name__)
 
 
-def create_app(app, db_path='benford.py'):
+def create_app(db_path='benford.db'):
     app.config.update(
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_DATABASE_URI=f'sqlite:///{os.path.join("./", db_path)}'
@@ -18,16 +18,12 @@ def create_app(app, db_path='benford.py'):
     db.app = app
     db.init_app(app)
     db.create_all(app=app)
-
-
-if app.config['ENV'] != 'development':
-    create_app(app)
+    return app
 
 
 @app.route('/')
 def index():
-    # return render_template('index.html')
-    return "Hello world!"
+    return render_template('index.html')
 
 
 @app.route('/preview', methods=['GET'])
@@ -96,4 +92,4 @@ def analyze(filename=None):
 
 
 if __name__ == '__main__':
-    app.run()
+    create_app().run(host='0.0.0.0', port=8000, debug=True)

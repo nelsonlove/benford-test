@@ -1,0 +1,5 @@
+etc/
+.git/
+Dockerfile
+.DS_Store
+*.db
