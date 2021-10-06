@@ -91,9 +91,9 @@ class TestAnalysis(TestCase):
 
         # Benford used atomic weight data from 1938, so the answer won't match exactly--
         # and unfortunately, similar discrepancies result from trying to derive his
-        # mathematically grounded sequences by floating-point calculations--but we should
-        # still be able to get fairly close, and we know that this won't pose a problem
-        # for data which we have in advance
+        # mathematically grounded sequences because of how floats are represented, but we
+        # should still be able to get fairly close, and we know that this won't pose a
+        # problem for data which we have in advance
         self.assertTrue(
             abs(round(observed_sum_of_differences) - round(sum(differences_from_expected))) <= 1
         )
