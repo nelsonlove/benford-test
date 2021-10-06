@@ -2,7 +2,6 @@ import codecs
 import csv
 import io
 import itertools
-import os
 
 import chardet
 from flask_sqlalchemy import SQLAlchemy
@@ -10,15 +9,6 @@ from flask_sqlalchemy import SQLAlchemy
 from analysis import parse_numeric
 
 db = SQLAlchemy()
-
-
-def init(app, db_path):
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join("./", db_path)}'
-
-    db.app = app
-    db.init_app(app)
-    db.create_all(app=app)
 
 
 class CSVFile(db.Model):
@@ -72,7 +62,10 @@ class CSVFile(db.Model):
 
     @property
     def viable_columns(self):
-        def is_number(x):
+        def is_numeric_or_blank(x):
+            # We can skip blanks later, for now we just want to see if the parser breaks for other reasons
+            if not x:
+                return True
             try:
                 parse_numeric(x)
             except ValueError:
@@ -84,7 +77,7 @@ class CSVFile(db.Model):
         for i in range(self.num_columns()):
             column = self.column(i)
             # Start at col[1:] because we don't want to count possible headers
-            if all(is_number(x) for x in column[1:]):
+            if all(is_numeric_or_blank(x) for x in column[1:]):
                 viable_columns.append((i, column[0]))
 
         return viable_columns

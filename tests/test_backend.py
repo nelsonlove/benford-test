@@ -5,13 +5,9 @@ from unittest import TestCase
 import analysis
 import database as db
 from app import app
+from tests import setup_once
 
-TEST_DB_PATH = os.getcwd() + '/test.db'
-
-if os.path.exists(TEST_DB_PATH):
-    os.remove(TEST_DB_PATH)
-
-db.init(app, TEST_DB_PATH)
+setup_once(app)
 
 
 class TestCSVFile(TestCase):
@@ -102,8 +98,13 @@ class TestFlask(TestCase):
         self.assertEqual(len(csvfile), response_json['numRows'])
         self.assertEqual(1, response_json['numDiscarded'])
 
-        # Along with indices for viable columns
-        self.assertEqual([0, 3, 4, 5, 6], response_json['viableColumnIndices'])
+        # This csv has no headers but the columns look like this:
+        #
+        # 1,"Eldon Base for stackable storage shelf, platinum",
+        # Muhammed MacIntyre,3,-213.25,38.94,35,Nunavut,Storage & Organization,0.8
+
+        # So we might surmise that columns 0, 3, 4, 5, 6, and 9 are viable
+        self.assertEqual([0, 3, 4, 5, 6, 9], response_json['viableColumnIndices'])
 
     def test_analyze(self):
         # I want to analyze a csv someone previously added to the database

@@ -1,27 +1,44 @@
+import os
+
 import sqlalchemy.exc
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
 import analysis
-import database as db
+from database import db, CSVFile
 
 app = Flask(__name__)
 
 
+def create_app(app, db_path='benford.py'):
+    app.config.update(
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=f'sqlite:///{os.path.join("./", db_path)}'
+    )
+    db.app = app
+    db.init_app(app)
+    db.create_all(app=app)
+
+
+if app.config['ENV'] != 'development':
+    create_app(app)
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # return render_template('index.html')
+    return "Hello world!"
 
 
 @app.route('/preview', methods=['GET'])
 def preview(filename=None):
     filename = request.args.get('filename', filename)
     if not filename:
-        files = db.CSVFile.query.order_by(db.CSVFile.date_created).all()
+        files = CSVFile.query.order_by(CSVFile.date_created).all()
         return {'uploadedFiles': [file.filename for file in files]}, 200
 
     try:
-        csvfile = db.CSVFile.query.filter_by(filename=filename).one()
+        csvfile = CSVFile.query.filter_by(filename=filename).one()
     except sqlalchemy.exc.NoResultFound:
         return "File not found", 404
     else:
@@ -43,7 +60,7 @@ def upload():
         return 'No usable parameters found', 422
     file = request.files['csv']
     try:
-        csvfile = db.CSVFile.load(file, secure_filename(file.filename))
+        csvfile = CSVFile.load(file, secure_filename(file.filename))
     except sqlalchemy.exc.IntegrityError:
         return 'There was an error uploading the file.', 422
     return preview(csvfile.filename)
@@ -57,7 +74,7 @@ def analyze(filename=None):
         return "No file was specified", 400
 
     try:
-        csvfile = db.CSVFile.query.filter_by(filename=filename).one()
+        csvfile = CSVFile.query.filter_by(filename=filename).one()
     except sqlalchemy.exc.NoResultFound:
         return "File not found", 404
     else:
@@ -78,10 +95,5 @@ def analyze(filename=None):
         return response, 200
 
 
-def main():
-    db.init(app, 'benford.db')
-    app.run()
-
-
 if __name__ == '__main__':
-    main()
+    app.run()

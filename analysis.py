@@ -1,6 +1,7 @@
 import math
 
-# Assuming 8 degrees of freedom,
+# Taken from https://www.itl.nist.gov/div898/handbook/eda/section3/eda3674.htm
+# Assumes 8 degrees of freedom
 CRITICAL_VALUES = {
     '0.10': 13.362,
     '0.05': 15.507,
@@ -8,9 +9,6 @@ CRITICAL_VALUES = {
     '0.01': 20.090,
     '0.001': 26.125,
 }
-
-
-# Taken from https://www.itl.nist.gov/div898/handbook/eda/section3/eda3674.htm
 
 
 def parse_numeric(string):

@@ -3,6 +3,9 @@ from functools import lru_cache
 from unittest import TestCase
 
 import analysis
+from app import app
+from tests import setup_once
+setup_once(app)
 
 
 class TestAnalysis(TestCase):
@@ -61,20 +64,20 @@ class TestAnalysis(TestCase):
         # And we should get back a count of 2 for each digit from our dict constructor
         cleaned_data = analysis.clean_data(data)
         self.assertEqual([1, 2, 3, 4, 5, 6, 7, 8, 9] * 2, cleaned_data)
-        self.assertEqual({x: 2 for x in range(1, 10)}, analysis.observed_distribution(cleaned_data))
+        self.assertEqual({str(x): 2 for x in range(1, 10)}, analysis.observed_distribution(cleaned_data))
 
     def test_benford_function_and_expected_distribution_for_n(self):
-        # Frequencies below taken from table III of Benford's original paper (1938, p. 556)
+        # Frequencies in % below taken from table III of Benford's original paper (1938, p. 556)
         atomic_weight_frequencies = [0.301, 0.176, 0.125, 0.097, 0.079, 0.067, 0.058, 0.051, 0.046]
-
+        expected_frequencies = analysis.expected_distribution(1)
         # Benford rounded figures in his paper so we'll look for near but not exact equality
         for i, frequency in enumerate(atomic_weight_frequencies):
             self.assertAlmostEqual(frequency, analysis.benford(i + 1), places=3)
-            self.assertAlmostEqual(frequency, analysis.expected_distribution(1)[i + 1], places=3)
+            self.assertAlmostEqual(frequency, expected_frequencies[str(i + 1)], places=3)
 
             n = 37  # Try it for n > 1 and the inequality gets larger,
             # but we know the formula behind the function is sound
-            self.assertAlmostEqual(frequency * n, analysis.expected_distribution(n)[i + 1], places=1)
+            self.assertAlmostEqual(frequency * n, analysis.expected_distribution(n)[str(i + 1)], places=1)
 
         # Benford tested his observation on atomic weights of the first 91 elements,
         # reporting the sum of the differences between the expected and actual distribution
