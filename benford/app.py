@@ -4,8 +4,8 @@ import sqlalchemy.exc
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
-import analysis
-from database import db, CSVFile
+import benford.analysis as analysis
+from benford.database import db, CSVFile
 
 app = Flask(__name__)
 

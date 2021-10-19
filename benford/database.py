@@ -6,7 +6,7 @@ import itertools
 import chardet
 from flask_sqlalchemy import SQLAlchemy
 
-from analysis import parse_numeric
+from benford.analysis import parse_numeric
 
 db = SQLAlchemy()
 

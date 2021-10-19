@@ -3,7 +3,7 @@ from functools import lru_cache
 from unittest import TestCase
 
 import analysis
-from tests import setup_once
+from create_app import setup_once
 app = setup_once()
 
 

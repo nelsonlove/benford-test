@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import analysis
 import database as db
-from tests import setup_once
+from create_app import setup_once
 
 app = setup_once()
 
