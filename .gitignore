@@ -128,7 +128,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#
+# Miscellaneous related files
 /etc/
-/tests/test.db
-/tests/scratch.py
+
+# Database files
+*.db
+
+# Unneeded Node/Cypress files
+/tests/cypress/node_modules/
+/tests/cypress/cypress/screenshots/
+/tests/cypress/cypress/videos/
+
