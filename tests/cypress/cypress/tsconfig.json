@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,
+    "types": ["cypress", "cypress-file-upload"]
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
