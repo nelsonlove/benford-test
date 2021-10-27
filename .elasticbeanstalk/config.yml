@@ -2,6 +2,8 @@ branch-defaults:
   default:
     environment: benford-env
     group_suffix: null
+  main:
+    environment: benford-env
 global:
   application_name: benford
   branch: null
