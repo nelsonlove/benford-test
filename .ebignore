@@ -1,4 +1,16 @@
-/etc/
-/tests/test.db
-/tests/scratch.py
-benford.db
+# Docker files
+.dockerignore
+Dockerfile
+
+# Miscellaneous files
+.DS_Store
+/etc
+.idea
+
+# Database files
+*.db
+
+# Unneeded Node/Cypress files
+/tests/cypress/node_modules
+/tests/cypress/cypress/screenshots
+/tests/cypress/cypress/videos

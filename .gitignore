@@ -128,14 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Miscellaneous related files
-/etc/
+# Miscellaneous files
+.DS_Store
+/etc
 
 # Database files
 *.db
 
 # Unneeded Node/Cypress files
-/tests/cypress/node_modules/
-/tests/cypress/cypress/screenshots/
-/tests/cypress/cypress/videos/
+/tests/cypress/node_modules
+/tests/cypress/cypress/screenshots
+/tests/cypress/cypress/videos
 
