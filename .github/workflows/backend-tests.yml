@@ -1,5 +1,7 @@
 name: Backend tests
-on: [push]
+on: 
+  workflow_dispatch:
+  push:
 jobs:
   build-and-test:
     name: Install dependencies, lint, and run backend tests

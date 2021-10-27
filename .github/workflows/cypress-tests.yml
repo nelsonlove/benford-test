@@ -1,5 +1,7 @@
 name: Cypress tests
-on: [push]
+on: 
+  workflow_dispatch:
+  push:
 jobs:
   build-and-test:
     name: Install dependencies and run Cypress tests
