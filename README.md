@@ -4,6 +4,8 @@ Web application built with Flask/Vue.js for testing conformity of .csv data to B
 
 This app allows users to upload a CSV file with numerical data and test it for conformity to [Benford's Law](https://en.wikipedia.org/wiki/Benford's_law), a statistical phenomenon that can be used in forensic accounting to detect fraud. The law states that in a large set of numbers, leading digits occur with a frequency that is logarithmic to their rank. For example, the number 1 should occur about 30% of the time, while the number 9 should occur about 4.5% of the time.
 
+The specifications to which I built this app can be found at [`specifications.md`](https://github.com/nelsonlove/benford-test/blob/main/specifications.md).
+
 ## Features
 
 Features include:
@@ -28,6 +30,7 @@ Features include:
 - Exception handling:
   - Improperly formatted .csv files or files without numerical data
   - Selected columns which are more than 10% non-numeric
+
 ## Demo
 
 A live demo running on AWS Elastic Beanstalk is available [here](http://benford.nelson.love).
