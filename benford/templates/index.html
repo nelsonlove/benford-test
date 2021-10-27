@@ -12,8 +12,8 @@
 </head>
 <body style="opacity:0;">
 <main id="app" class="container-fluid">
-    <div class="row" :class="visible.analysis ? '' : 'justify-content-center'">
-        <div id="sidebar" class="" :class="visible.analysis ? 'col-xl-5' : 'col-lg-auto'">
+    <div class="row" :class="analysis ? '' : 'justify-content-center'">
+        <div id="sidebar" class="" :class="analysis ? 'col-xl-5' : 'col-lg-auto'">
             <div class="card mt-3 bg-light">
                 <div class="card-body">
                     <div class="row justify-content-between">
@@ -22,7 +22,7 @@
                             <p class="card-subtitle mb-2 text-muted">
                                 Uploaded files:
                                 <span id="uploaded-files-count"
-                                      v-html="uploadedFiles.length ? uploadedFiles.length : 'None'"/>
+                                      v-html="csvFiles.length ? csvFiles.length : 'None'"/>
                             </p>
                         </div>
                         <div class="col col-lg-6">
@@ -44,12 +44,12 @@
                                 <label class="form-label">
                                     Select a previously uploaded file:
                                     <select id="uploaded-files-select" class="mt-2 form-select"
-                                            v-model="selected"
-                                            :disabled="uploadedFiles.length === 0"
+                                            v-model="selectedFile"
+                                            :disabled="csvFiles.length === 0"
                                     >
-                                        <option v-for="(item, index) in uploadedFiles"
-                                                v-model="item"
-                                                v-html="item"
+                                        <option v-for="(item, index) in csvFiles"
+                                                v-html="item.attributes.filename"
+                                                :value="item"
                                                 :key="index"
                                         />
                                     </select>
@@ -57,34 +57,24 @@
                             </form>
                         </div>
                     </div>
-                    {#                    <div class="row">#}
-                    {#                        <div class="col-lg-auto">#}
-                    <p id="status-message" class="mb-3"
-                       v-if="statusMessage"
-                       v-html="statusMessage"
+                    <p id="upload-error" class="mb-3 alert alert-danger"
+                       v-if="uploadError"
+                       v-html="uploadError"
                     />
                     <div id="preview" class="card"
-                         v-if="visible.preview">
+                         v-if="preview">
                         <div class="card-body">
-                            <h2 class="h4 card-title">
-                                File: <span id="csv-filename" v-html="preview.filename"/>
-                            </h2>
-                            <p id="csv-row-count" class="card-subtitle mb-2 text-muted">
-                                <span id="csv-row-count" v-html="preview.numRows"></span>
-                                rows,
-                                <span id="csv-discarded-row-count" v-html="preview.numDiscarded"></span>
-                                excluded
-                            </p>
-                            <p class="card-subtitle mb-2 text-muted">
-                                <span id="csv-viable-column-count"
-                                      v-html="preview.viableColumnIndices.length"></span>
-                                viable columns
-                            </p>
+                            <h2 class="h4 card-title" id="csv-filename"
+                            >File: ${preview.filename}</h2>
+                            <p id="csv-row-count"
+                               class="card-subtitle mb-2 text-muted"
+                            >${preview.numRows} rows, ${preview.numDiscarded} excluded</p>
                             <p id="preview-error" class="alert alert-danger" role="alert"
-                               v-if="!preview.viableColumnIndices.length || !preview.data">
-                                No usable data was found. If this is a .csv file, ensure it has
-                                at least one column which is unambiguously numerical.
-                            </p>
+                               v-if="!viableColumns.length || !preview.previewData"
+                            >Warning: No usable data was found. Please ensure the file has at least one column which is unambiguously numerical.</p>
+                            <p id="csv-viable-column-count"
+                               class="card-subtitle mb-2 text-muted"
+                            >${viableColumns.length} viable columns detected</p>
                             <h3 class="card-subtitle mb-2 h4 text-muted">
                                 Preview:
                             </h3>
@@ -122,10 +112,10 @@
                                 <div class="col-sm-auto mb-3">
                                     <label for="csv-target-column-select" v-if="viableColumns">Target
                                         column</label>
-                                    <select id="csv-target-column-select" v-model="targetColumn">
-                                        <option v-for="(item) in viableColumns"
+                                    <select id="csv-target-column-select" v-model="selectedColumn">
+                                        <option v-for="(item, index) in viableColumns"
                                                 v-html="item[1]"
-                                                :value="item[0]"
+                                                :value="index"
                                         />
                                     </select>
                                 </div>
@@ -135,25 +125,22 @@
                 </div>
             </div>
         </div>
-        <div id="analysis" class="col-xl-7" v-if="visible.analysis">
+        <div id="analysis" class="col-xl-7" v-if="analysis">
             <div class="card mt-3 bg-light">
                 <div class="card-body">
                     <h2 class="h3 card-title">Analysis</h2>
                     <div class="row">
                         <div class="col-lg-7">
-                            <p id="preview-error" class="alert alert-warning" role="alert"
-                               v-if="rowsExcluded > (preview.numRows / 10)">
-                                Note: no numerical data was found for <u>over 10%</u> or more of rows in the target
-                                column.
-                                These rows are not included in the analysis.
-                            </p>
+                            <p id="analysis-error" class="alert alert-warning" role="alert"
+                               v-if="rowsExcluded > (preview.numRows / 10)"
+                            >Note: no numerical data was found for <u>10% or more</u> of rows in the target column. These rows are not included in the analysis.</p>
                             <div class="mb-4 bg-white p-2 border border-faded">
                                 <bar-chart id="histogram" ref="chart"/>
                             </div>
                             <div class="card bg-white mb-4">
-                                <div class="card-body">
+                                <div id="frequencies" class="card-body">
                                     <h4 class="h5 card-title">Distribution of digits</h4>
-                                    <div id=frequencies-table-wrapper" class="table-responsive">
+                                    <div id="frequencies-table-wrapper" class="table-responsive">
                                         <table id="frequencies-table" class="table table-sm">
                                             <thead class="table-light">
                                             <tr>
@@ -163,12 +150,12 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            <tr>
+                                            <tr id="frequencies-table-expected">
                                                 <th>Expected</th>
                                                 <td v-for="(item) in expectedDistribution"
                                                     :id="'expected-count-' + item"
                                                     v-html="item"/>
-                                            <tr>
+                                            <tr id="frequencies-table-observed">
                                                 <th>Observed</th>
                                                 <td v-for="(item) in analysis.observedDistribution"
                                                     :id="'observed-count-' + item"
@@ -188,11 +175,7 @@
                                     </h2>
                                     <dl id="goodness-of-fit-test" class="">
                                         <dt>Sample size:</dt>
-                                        <dd>
-                                            n = <span id="test-n" v-html="analysis.n"></span>
-                                            (<span id="test-rows-excluded" v-html="rowsExcluded"></span>
-                                            rows excluded)
-                                        </dd>
+                                        <dd id="test-sample-size">n = ${analysis.n} (${rowsExcluded} rows excluded)</dd>
                                         <dt>
                                             <label for="test-p-value-select">
                                                 <em>p</em>-value:
@@ -202,55 +185,29 @@
                                             <select id="test-p-value-select"
                                                     class="form-select form-select-sm"
                                                     v-model="pValue">
-                                                <option v-for="(key, value) in analysis.goodnessOfFit.criticalValues"
-                                                        v-bind:value="value"
+                                                <option v-for="(key, value) in analysis.criticalValues"
+                                                        :value="value"
                                                         v-html="value"/>
                                             </select>
                                         </dd>
 
                                         <dt>Critical value:</dt>
-                                        <dd>
-                                            (<em>p</em> = ${ pValue }) &chi;&sup2;<em>c</em> =
-                                            <span id="test-critical-value" v-html="criticalValue"/>
-                                        </dd>
+                                        <dd id="test-critical-value">(<em>p</em> = ${ pValue }) &chi;&sup2;<em>c</em> = ${criticalValue}</dd>
 
                                         <dt>Null hypothesis (H<sub>0</sub>):</dt>
-                                        <dd id="test-null-hypothesis">
-                                            No significant differences between distributions, i.e.,
-                                            observed distribution conforms to Benford's Law.
-                                        </dd>
+                                        <dd id="test-null-hypothesis">No significant differences between distributions, i.e., observed distribution conforms to Benford's Law.</dd>
 
                                         <dt>Test statistic:</dt>
-                                        <dd>
-                                            &chi;&sup2; (8, N=${ analysis.n }) =
-                                            <span id="test-statistic"
-                                                  v-html="analysis.testStatistic.toPrecision(6)">
-                                        </span>
-                                        </dd>
+                                        <dd id="test-statistic">&chi;&sup2; (8, N=${ analysis.n }) = ${analysis.testStatistic.toPrecision(6)}</dd>
 
                                         <dt>Result:</dt>
-                                        <dd>
-                                            &chi;&sup2;
-                                            <span id="test-result"
-                                                  v-html="testResult ? '&gt;' : '&lt;'">
-                                        </span>
-                                            &chi;&sup2;<em>c</em>
-                                        </dd>
+                                        <dd id="test-result">&chi;&sup2; ${testResult ? '&gt;' : '&lt;'} &chi;&sup2;<em>c</em></dd>
 
                                         <dt>Interpretation:</dt>
-                                        <dd id="test-interpretation">
-                                            ${ testResult ? 'Reject' : 'Keep' } the null hypothesis;
-                                            <u>${ testResult ? 'significant' : 'no significant' }
-                                                differences</u> between distributions at <em>p</em> =
-                                            ${ pValue }.
-                                        </dd>
+                                        <dd id="test-interpretation">${ testResult ? 'Reject' : 'Retain' } the null hypothesis; <u>${ testResult ? 'significant' : 'no significant' } differences</u> between distributions at <em>p</em> = ${ pValue }.</dd>
 
                                         <dt>Conclusion:</dt>
-                                        <dd id="test-conclusion">
-                                            Observed distribution
-                                            ${ testResult ? 'does not conform' : 'conforms' } to
-                                            Benford's Law.
-                                        </dd>
+                                        <dd id="test-conclusion">Observed distribution ${ testResult ? 'does not conform' : 'conforms' } to Benford's Law.</dd>
                                     </dl>
                                 </div>
                             </div>
@@ -288,34 +245,26 @@
           preview: false,
           analysis: false,
         },
-        preview: {
-          filename: null,
-          numRows: null,
-          numDiscarded: null,
-          viableColumnIndices: [],
-          data: null,
-        },
-        uploadedFiles: [],
-        selected: null,
+        preview: null,
+        csvFiles: [],
+        selectedFile: null,
         status: INITIAL,
-        statusMessage: null,
+        uploadError: null,
         hasHeaders: true,
-        targetColumn: null,
-        analysis: {
-          n: null,
-          expectedDistribution: {},
-          observedDistribution: {},
-          testStatistic: {},
-          goodnessOfFit: {},
-        },
+        selectedColumn: null,
+        analysis: null,
         pValue: null,
       }
     },
+    mounted () {
+      this.getCsvFiles()
+    },
     methods: {
-      getUploadedFiles () {
-        axios.get('preview')
+      getCsvFiles () {
+        axios.get('csv')
           .then(response => {
-            this.uploadedFiles = response.data.uploadedFiles
+            this.csvFiles = response.data.data
+            console.log(this.csvFiles)
           })
           .catch(err => {
             this.uploadError = err.response
@@ -327,26 +276,19 @@
           return
         }
         const [file] = event.target.files
-        if (this.uploadedFiles.indexOf(file.name) > -1) {
-          alert('An uploaded file with that name already exists.')
-          return
-        }
         this.currentStatus = LOADING
         const formData = new FormData()
         formData.append('csv', file, file.name)
 
         axios.post('upload', formData)
           .then(response => {
-            this.preview = response.data
-            this.getUploadedFiles()
+            this.selectedFile = response.data.data
+            this.getCsvFiles()
             this.clearChart()
-            this.selected = this.preview.filename
-            this.visible.preview = true
             this.status = SUCCESS
           })
-          .catch(err => {
-            this.uploadError = err.response
-            console.log(err)
+          .catch(error => {
+            this.uploadError = error.response.data.message
             this.status = FAILED
           })
       },
@@ -375,7 +317,7 @@
         }, {
           title: {
             display: true,
-            text: this.preview.filename + ' (' + this.headers[this.targetColumn] + ')'
+            text: this.preview.filename + ' (' + this.headers[this.selectedColumn] + ')'
           },
           scales: {
             yAxes: [{
@@ -401,106 +343,97 @@
           },
           datasets: [],
         })
+      },
+      getPreview () {
+        this.status = LOADING
+        const url = `csv/${this.selectedFile.id}/preview`
+        axios.get(url)
+          .then(response => {
+            this.preview = response.data.data.attributes
+            this.analysis = null
+            this.selectedColumn = null
+            this.clearChart()
+            this.hasHeaders = true
+            this.status = SUCCESS
+          })
+          .catch(err => {
+            this.status = FAILED
+          })
+      },
+      getAnalysis () {
+        this.status = LOADING
+        const url = `csv/${this.selectedFile.id}/analysis`
+        axios.get(url, {})
+          .then(response => {
+            this.analysis = response.data.data.attributes.columns[this.selectedColumn]
+            this.status = SUCCESS
+            this.pValue = '0.05'
+          })
+          .catch(error => {
+            console.log(error)
+            this.status = FAILED
+            this.uploadError = error.response.data.message
+          })
       }
     },
-    mounted () {
-      this.getUploadedFiles()
-    },
+
     watch: {
-      selected () {
-        if (!this.selected) {
-          this.visible.preview = false
+      selectedFile () {
+        console.log(this.selectedFile)
+        if (!this.selectedFile) {
+          this.preview = null
         } else {
-          this.status = LOADING
-          axios.get('preview', { params: { filename: this.selected } })
-            .then(response => {
-              this.preview = response.data
-              this.status = SUCCESS
-            })
-            .catch(err => {
-              this.status = FAILED
-            })
+          this.getPreview()
         }
       },
-      preview () {
-        this.clearChart()
-        this.targetColumn = null
-        this.hasHeaders = true
-        if (this.preview) {
-          this.visible.preview = true
-          this.visible.analysis = false
-        } else {
-          this.visible.preview = false
+      selectedColumn () {
+        if (this.selectedColumn != null) {
+          this.getAnalysis()
         }
       },
       analysis () {
         if (this.analysis) {
-          this.renderChart()
-          this.visible.analysis = true
+          this.$nextTick(this.renderChart)
         } else {
           this.clearChart()
-          this.visible.analysis = false
         }
       },
       status () {
-        switch (this.status) {
-          case LOADING:
-            this.statusMessage = 'Loading...'
-            break
-          case FAILED:
-            this.statusMessage = 'Load failed!'
-            break
-          default:
-            this.statusMessage = null
-            break
+        if (this.status === SUCCESS) {
+          this.uploadError = null
         }
-      },
-      targetColumn () {
-        if (this.targetColumn == null) {
-          return
-        }
-        this.status = LOADING
-        axios.get('analyze', {
-          params: {
-            filename: this.selected,
-            columnIndex: this.targetColumn,
-          }
-        })
-          .then(response => {
-            this.analysis = response.data
-            this.status = SUCCESS
-            this.pValue = '0.05'
-            this.$nextTick(this.renderChart)
-            this.visible.analysis = true
-          })
-          .catch(err => {
-            console.log(err)
-            this.uploadError = err.response
-            this.status = FAILED
-          })
       },
     },
     computed: {
       headers () {
         return this.hasHeaders ?
-          this.preview.data[0]
-          : this.preview.data[0].map((header, index) => {
+          this.preview.previewData[0]
+          : this.preview.previewData[0].map((header, index) => {
             return '#' + (index + 1)
           })
       },
+      loading () {
+        return (this.status === LOADING)
+      },
+      uploadFailed () {
+        return (this.status === FAILED)
+      },
       previewData () {
         return this.hasHeaders ?
-          this.preview.data.slice(1)
-          : this.preview.data.slice(0, 5)
+          this.preview.previewData.slice(1)
+          : this.preview.previewData.slice(0, 5)
       },
       viableColumns () {
+        if (!this.preview) {
+          return []
+        }
         return this.preview.viableColumnIndices.map((colIndex) => [colIndex, this.headers[colIndex]])
       },
       criticalValue () {
-        return this.analysis.goodnessOfFit.criticalValues[this.pValue]
+        return this.analysis.criticalValues[this.pValue]
       },
       testResult () {
-        return this.analysis.goodnessOfFit.results[this.pValue]
+        return this.analysis.goodnessOfFit[this.pValue]
       },
       rowsExcluded () {
         return this.preview.numRows - this.analysis.n
