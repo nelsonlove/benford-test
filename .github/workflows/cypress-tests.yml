@@ -1,0 +1,29 @@
+name: Cypress tests
+on: [push]
+jobs:
+  build-and-test:
+    name: Install dependencies and run Cypress tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: ./.github/actions/setup-python
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install node dependencies
+      uses: bahmutov/npm-install@v1
+      with:
+        working-directory: tests/cypress
+    - name: Start test server
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd):$(./tests/backend)
+        python ./tests/backend/test_base.py &
+    - name: Run cypress
+      uses: cypress-io/github-action@v2
+      with:
+        wait-on: 'http://localhost:8000'
+        working-directory: tests/cypress
