@@ -6,6 +6,10 @@ This app allows users to upload a CSV file with numerical data and test it for c
 
 The specifications to which I built this app can be found in [`/specifications.md`](https://github.com/nelsonlove/benford-test/blob/main/specifications.md).
 
+## Demo
+
+A live demo running on AWS Elastic Beanstalk is available [here](http://benford.nelson.love).
+
 ## Features
 
 Features include:
@@ -30,10 +34,6 @@ Features include:
 - Exception handling:
   - Improperly formatted .csv files or files without numerical data
   - Selected columns which are more than 10% non-numeric
-
-## Demo
-
-A live demo running on AWS Elastic Beanstalk is available [here](http://benford.nelson.love).
 
 ## Docker
 
