@@ -13,15 +13,17 @@ CRITICAL_VALUES = {
 
 def parse_numeric(string):
     # Some minimal string formatting
-    string_sans_commas = string.replace(',', '')
-    parsed_string = string_sans_commas.lstrip('$')
+    string = string.replace(',', '')
+
+    while string and string[0] in ['-', '$']:
+        string = string[1:]
 
     try:
-        float(parsed_string)
+        float(string)
     except ValueError:
         raise
     else:
-        return parsed_string
+        return string
 
 
 def get_first_digit(string):
@@ -53,7 +55,6 @@ def clean_data(raw_data):
             first_digit = get_first_digit(string)
         except ValueError:
             skipped.append(string)
-            # raise
         else:
             data.append(int(first_digit))
 
