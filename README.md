@@ -12,15 +12,12 @@ A live demo running on AWS Elastic Beanstalk is available [here](http://benford.
 
 ## Features
 
-Features include:
-
-- Simple user interface with single-page architecture
-  - Reactive UI elements with Vue.js
+- Simple Vue UI with single-page architecture 
   - Bootstrap-based responsive layout
   - Separation between backend and frontend via RESTful API
+  - Validation with user feedback on errors, e.g., improperly formatted or non-numeric .csv files
 - Multiple file upload
-  - Persistence of uploaded files via a SQLite database
-  - Handles exceptions with user feedback, e.g., improperly formatted or non-numeric .csv files
+  - SQLite database persists uploaded files 
 - Preview of uploaded .csv files:
   - Displays filename with row/column count
   - Table of first six rows (five plus header) of file
