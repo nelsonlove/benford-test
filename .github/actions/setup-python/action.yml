@@ -10,7 +10,7 @@ runs:
   - uses: actions/checkout@v2
   - uses: actions/setup-python@v2
     with:
-      python_version: ${{ env.INPUT_PYTHON-VERSION }}
+      python-version: ${{ env.INPUT_PYTHON-VERSION }}
   - run: |
       python -m pip install --upgrade pip
       pip install flake8 pytest
