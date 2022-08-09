@@ -8,7 +8,7 @@ The specifications to which I built this app can be found in [`/specifications.m
 
 ## Demo
 
-A live demo running on AWS Elastic Beanstalk is available [here](http://benford.nelson.love).
+~~A live demo running on AWS Elastic Beanstalk is available [here](http://benford.nelson.love).~~ Demo is currently down due to a dead CDN link; hopefully the GH workflows work and it's back up soon!
 
 ## Features
 
