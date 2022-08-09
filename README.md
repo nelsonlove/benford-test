@@ -45,5 +45,7 @@ I have uploaded a container to [Docker Hub](https://hub.docker.com/r/nelsonlove/
 
 A number of tests are included in this repo, including tests making use of Benford's original data to ensure that the numerical analysis is accurate. These tests are split into two subdirectories, `tests/backend` and `tests/cypress`. I have written four GitHub Actions workflows for this project, found in the `./github/workflows` subdirectory:
 
-- `backend-tests.yml` and `cypress-tests.yml` trigger on a push event. They do what their names suggest. Backend tests are handled by `python -m unittest discover`; the `cypress-tests.yml` workflow starts a Flask instance in the background before running Cypress.
-- `docker-hub-push.yml` and `elastic-beanstalk-deploy.yml` also do what they sound like. Each is triggered manually or on a publish event.
+- `backend-tests.yml`: backend tests handled by `python -m unittest discover`
+- `cypress-tests.yml`: starts a Flask instance in the background before running Cypress.
+- `docker-hub-push.yml`: pushes container image to Docker Hub.
+- `elastic-beanstalk-deploy.yml`: deploys image to AWS.
