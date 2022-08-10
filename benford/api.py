@@ -1,25 +1,10 @@
-import json
-import re
-
+from flask_rest_jsonapi import ResourceList, ResourceDetail
 from marshmallow import post_dump
 from marshmallow_jsonapi import fields
 from marshmallow_jsonapi.flask import Schema, Relationship
 
-
-def underscore_to_camel(name):
-    under_pat = re.compile(r'_([a-z])')
-    return under_pat.sub(lambda x: x.group(1).upper(), name)
-
-
-class JSON(fields.Field):
-    def _deserialize(self, value, attr, data, **kwargs):
-        if value:
-            try:
-                return json.loads(value)
-            except ValueError:
-                return None
-
-        return None
+from .models import CSVFile, db
+from .util import underscore_to_camel
 
 
 class CSVSchema(Schema):
@@ -47,6 +32,22 @@ class CSVSchema(Schema):
     )
 
 
+class CSVDetail(ResourceDetail):
+    schema = CSVSchema
+    data_layer = {
+        'session': db.session,
+        'model': CSVFile
+    }
+
+
+class CSVList(ResourceList):
+    schema = CSVSchema
+    data_layer = {
+        'session': db.session,
+        'model': CSVFile,
+    }
+
+
 class PreviewSchema(Schema):
     class Meta:
         type_ = 'preview'
@@ -72,6 +73,14 @@ class PreviewSchema(Schema):
         for key, value in csvfile.preview().items():
             data[key] = value
         return data
+
+
+class CSVPreview(ResourceDetail):
+    schema = PreviewSchema
+    data_layer = {
+        'session': db.session,
+        'model': CSVFile
+    }
 
 
 class ColumnSchema(Schema):
@@ -118,3 +127,11 @@ class AnalysisSchema(Schema):
 
         data['columns'] = analyses
         return data
+
+
+class CSVAnalysis(ResourceDetail):
+    schema = AnalysisSchema
+    data_layer = {
+        'session': db.session,
+        'model': CSVFile,
+    }

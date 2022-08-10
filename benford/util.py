@@ -1,4 +1,5 @@
 import math
+import re
 
 # Taken from https://www.itl.nist.gov/div898/handbook/eda/section3/eda3674.htm
 # Assumes 8 degrees of freedom
@@ -99,3 +100,8 @@ def conforms_to_benford(raw_data):
     digits = clean_data(raw_data)
     return goodness_of_fit(expected_distribution(len(digits)),
                            observed_distribution(digits))
+
+
+def underscore_to_camel(name):
+    under_pat = re.compile(r'_([a-z])')
+    return under_pat.sub(lambda x: x.group(1).upper(), name)

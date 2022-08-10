@@ -4,10 +4,11 @@ import io
 import itertools
 
 import chardet
+from flask_sqlalchemy import SQLAlchemy
 
-from benford import analysis
-from benford.analysis import parse_numeric
-from benford.database import db
+from benford import util
+
+db = SQLAlchemy()
 
 
 class CSVFile(db.Model):
@@ -59,7 +60,7 @@ class CSVFile(db.Model):
             if not x:
                 return True
             try:
-                parse_numeric(x)
+                util.parse_numeric(x)
             except ValueError:
                 return False
             return True
@@ -91,9 +92,9 @@ class CSVFile(db.Model):
     def analysis(self, column_index):
         viable_rows = self.viable_rows()
         column = [row[column_index] for row in viable_rows]
-        data = analysis.clean_data(column)
-        expected = analysis.expected_distribution(len(data))
-        observed = analysis.observed_distribution(data)
+        data = util.clean_data(column)
+        expected = util.expected_distribution(len(data))
+        observed = util.observed_distribution(data)
 
         return {
             'name': viable_rows[0][column_index],
@@ -101,7 +102,7 @@ class CSVFile(db.Model):
             'n': len(data),
             'expectedDistribution': expected,
             'observedDistribution': observed,
-            'testStatistic': analysis.sum_chi_squares(expected, observed),
-            'criticalValues': analysis.CRITICAL_VALUES,
-            'goodnessOfFit': analysis.goodness_of_fit(expected, observed)
+            'testStatistic': util.sum_chi_squares(expected, observed),
+            'criticalValues': util.CRITICAL_VALUES,
+            'goodnessOfFit': util.goodness_of_fit(expected, observed)
         }
